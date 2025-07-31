@@ -1,32 +1,78 @@
-import asyncio
-import logging
 import sys
+import os
+import asyncio
 
-from automation_server_client import AutomationServer, Workqueue, WorkItemError
+import subprocess
+
+from dotenv import load_dotenv
+
+from automation_server_client import AutomationServer
 
 
-async def populate_queue(workqueue: Workqueue):
-    logger = logging.getLogger(__name__)
+async def run_go_tests():
+    # Load .env file
+    env_path = os.path.join(os.path.dirname(__file__), "go.env")
+    load_dotenv(dotenv_path=env_path)
 
-    logger.info("Hello from populate workqueue!")
+    print()
+    print("Running tests using:")
+    print(" - GO_API_ENDPOINT:", os.getenv("GO_API_ENDPOINT"))
+    print(" - TEST_PERSON_FULL_NAME:", os.getenv("DADJ_FULL_NAME"))
+    print()
+
+    # Construct full path to installed test file
+    shared_test_path = os.path.join(
+        os.environ["VIRTUAL_ENV"],
+        "Lib",
+        "site-packages",
+        "mbu_dev_shared_components",
+        "tests",
+        "go_tests",
+        "go_integration_tests.py"
+    )
+
+    # Run the test file using full path
+    exit_code = subprocess.call([
+        "pytest",
+        "-v",
+        "--disable-warnings",
+        shared_test_path
+    ])
+
+    sys.exit(exit_code)
 
 
-async def process_workqueue(workqueue: Workqueue):
-    logger = logging.getLogger(__name__)
+# async def run_msoffice_tests():
+#     # Load .env file
+#     env_path = os.path.join(os.path.dirname(__file__), "msoffice.env")
+#     load_dotenv(dotenv_path=env_path)
 
-    logger.info("Hello from process workqueue!")
+#     print()
+#     print("Running tests using:")
+#     print(" - GO_API_ENDPOINT:", os.getenv("GO_API_ENDPOINT"))
+#     print(" - TEST_PERSON_FULL_NAME:", os.getenv("DADJ_FULL_NAME"))
+#     print()
 
-    for item in workqueue:
-        with item:
-            data = item.get_data_as_dict()
+#     # Construct full path to installed test file
+#     shared_test_path = os.path.join(
+#         os.environ["VIRTUAL_ENV"],
+#         "Lib",
+#         "site-packages",
+#         "mbu_dev_shared_components",
+#         "tests",
+#         "go_tests",
+#         "go_integration_tests.py"
+#     )
 
-            try:
-                # Process the item here
-                pass
-            except WorkItemError as e:
-                # A WorkItemError represents a soft error that indicates the item should be passed to manual processing or a business logic fault
-                logger.error(f"Error processing item: {data}. Error: {e}")
-                item.fail(str(e))
+#     # Run the test file using full path
+#     exit_code = subprocess.call([
+#         "pytest",
+#         "-v",
+#         "--disable-warnings",
+#         shared_test_path
+#     ])
+
+#     sys.exit(exit_code)
 
 
 if __name__ == "__main__":
@@ -34,13 +80,12 @@ if __name__ == "__main__":
 
     workqueue = ats.workqueue()
 
-    # Initialize external systems for automation here..
+    if "--go_tests" in sys.argv:
+        asyncio.run(run_go_tests())
 
-    # Queue management
-    if "--queue" in sys.argv:
-        workqueue.clear_workqueue("new")
-        asyncio.run(populate_queue(workqueue))
         exit(0)
 
-    # Process workqueue
-    asyncio.run(process_workqueue(workqueue))
+    # if "--msoffice_tests" in sys.argv:
+    #     asyncio.run(run_msoffice_tests())
+
+    #     exit(0)

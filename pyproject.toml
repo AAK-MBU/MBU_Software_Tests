@@ -1,11 +1,21 @@
 [project]
-name = "process-template"
+name = "process-template-dadj"
 version = "0.1.0"
-description = "Add your description here"
+description = "dadj test project for software tests"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "automation-server-client",
+    "OpenOrchestrator == 1.*",
+    "mbu-dev-shared-components>=0.4.2",
+    "pandas >= 2.2.3",
+    "python-dotenv >= 1.0.1"
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest >= 7.0",
+  "pytest-dependency >= 0.5.1"
 ]
 
 [tool.uv.sources]

@@ -1,91 +1,48 @@
 import sys
 import os
-import asyncio
-
 import subprocess
-
 from dotenv import load_dotenv
 
-from automation_server_client import AutomationServer
 
+def run_tests(env_filename: str, test_folder: str, test_file: str) -> int:
+    """
+    Function to run tests
+    """
 
-async def run_go_tests():
-    # Load .env file
-    env_path = os.path.join(os.path.dirname(__file__), "go.env")
+    # Load env file
+    env_path = os.path.join(os.path.dirname(__file__), env_filename)
     load_dotenv(dotenv_path=env_path)
 
-    print()
-    print("Running tests using:")
-    print(" - GO_API_ENDPOINT:", os.getenv("GO_API_ENDPOINT"))
-    print(" - TEST_PERSON_FULL_NAME:", os.getenv("DADJ_FULL_NAME"))
-    print()
-
-    # Construct full path to installed test file
-    shared_test_path = os.path.join(
+    # Build test path
+    test_path = os.path.join(
         os.environ["VIRTUAL_ENV"],
         "Lib",
         "site-packages",
         "mbu_dev_shared_components",
         "tests",
-        "go_tests",
-        "go_integration_tests.py"
+        test_folder,
+        f"{test_file}.py"
     )
 
-    # Run the test file using full path
-    exit_code = subprocess.call([
+    # Run tests
+    return subprocess.call([
         "pytest",
         "-v",
         "--disable-warnings",
-        shared_test_path
+        test_path
     ])
-
-    sys.exit(exit_code)
-
-
-# async def run_msoffice_tests():
-#     # Load .env file
-#     env_path = os.path.join(os.path.dirname(__file__), "msoffice.env")
-#     load_dotenv(dotenv_path=env_path)
-
-#     print()
-#     print("Running tests using:")
-#     print(" - GO_API_ENDPOINT:", os.getenv("GO_API_ENDPOINT"))
-#     print(" - TEST_PERSON_FULL_NAME:", os.getenv("DADJ_FULL_NAME"))
-#     print()
-
-#     # Construct full path to installed test file
-#     shared_test_path = os.path.join(
-#         os.environ["VIRTUAL_ENV"],
-#         "Lib",
-#         "site-packages",
-#         "mbu_dev_shared_components",
-#         "tests",
-#         "go_tests",
-#         "go_integration_tests.py"
-#     )
-
-#     # Run the test file using full path
-#     exit_code = subprocess.call([
-#         "pytest",
-#         "-v",
-#         "--disable-warnings",
-#         shared_test_path
-#     ])
-
-#     sys.exit(exit_code)
 
 
 if __name__ == "__main__":
-    ats = AutomationServer.from_environment()
-
-    workqueue = ats.workqueue()
-
     if "--go_tests" in sys.argv:
-        asyncio.run(run_go_tests())
+        exit_code = run_tests("go.env", "go_tests", "go_integration_tests")
 
-        exit(0)
+    elif "--msoffice_tests" in sys.argv:
+        exit_code = run_tests("msoffice.env", "msoffice_tests", "msoffice_integration_tests")
 
-    # if "--msoffice_tests" in sys.argv:
-    #     asyncio.run(run_msoffice_tests())
+    else:
+        print("No valid test flag provided. Use --go_tests or --msoffice_tests.")
+        exit_code = 1
 
-    #     exit(0)
+    print(f"exit_code: {exit_code}")
+    sys.exit(exit_code)
